@@ -1,0 +1,47 @@
+version: "3.7"
+
+x-service: &default-service
+    logging:
+        driver: json-file
+        options:
+            max-size: "10m"
+            max-file: "5"
+    init: true
+    restart: unless-stopped
+
+x-environment: &default-environment
+    TZ: Asia/Tokyo
+    WEB_PORT: 8080
+    # WEBPASSWORD: 'set a secure password here or it will be random'
+
+x-network-host: &custom-network-host
+    network_mode: "host"
+
+# More info at https://github.com/pi-hole/docker-pi-hole/ and https://docs.pi-hole.net/
+services:
+    pi-hole:
+        container_name: pi-hole
+        <<: *default-service
+        <<: *custom-network-host
+        image: pihole/pihole:latest
+#        ports:
+#            - "53:53/tcp"
+#            - "53:53/udp"
+#            - "67:67/udp"
+#            - "80:80/tcp"
+        deploy:
+             resources:
+                  limits:
+                       memory: 2G
+                  reservations:
+                       memory: 512M
+        # Volumes store your data between container upgrades
+        volumes:
+             - ./etc-pihole/:/etc/pihole/
+             - ./etc-dnsmasq.d/:/etc/dnsmasq.d/
+        environment:
+            <<: *default-environment
+        # Recommended but not required (DHCP needs NET_ADMIN)
+        #   https://github.com/pi-hole/docker-pi-hole#note-on-capabilities
+        cap_add:
+            - NET_ADMIN
